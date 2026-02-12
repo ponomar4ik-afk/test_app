@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Mining Mini App</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         /* --- 1. Глобальные настройки и переменные --- */
         :root {
@@ -12,10 +13,13 @@
             --text-white: #FFFFFF;
             --text-gray: #797979;
             --text-gray-light: #979797;
-            --card-bg: #1A1A1A; /* Немного светлее фона для контраста */
+            --card-bg: #1A1A1A;
             --card-gray: #5B5B5B;
             --nav-bg: #000000;
-            --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", Roboto, sans-serif;
+            /* Более заметная обводка (15% непрозрачности вместо 5%) */
+            --border-color: rgba(255, 255, 255, 0.15); 
+            /* Универсальный шрифт: SF Pro для iOS, Roboto для Android */
+            --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Roboto", "Inter", sans-serif;
         }
 
         * {
@@ -33,17 +37,16 @@
             font-family: var(--font-family);
             color: var(--text-white);
             height: 100vh;
-            overflow: hidden; /* Скролл только внутри экранов */
+            overflow: hidden;
             display: flex;
             flex-direction: column;
         }
 
-        /* Убираем скроллбар, но оставляем прокрутку */
         .screen {
             flex: 1;
             overflow-y: auto;
-            padding: 20px 16px 100px 16px; /* Отступ снизу под меню */
-            display: none; /* Скрываем все экраны по умолчанию */
+            padding: 20px 16px 100px 16px;
+            display: none;
             opacity: 0;
             transition: opacity 0.2s ease-in-out;
         }
@@ -53,19 +56,17 @@
             opacity: 1;
         }
 
-        .screen::-webkit-scrollbar {
-            display: none;
-        }
+        .screen::-webkit-scrollbar { display: none; }
 
         /* --- Типографика --- */
         h1 { font-size: 24px; font-weight: 700; margin-bottom: 20px; text-align: center; }
-        h2 { font-size: 18px; font-weight: 600; margin-bottom: 12px; }
-        .text-sm { font-size: 12px; color: var(--text-gray); }
+        h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; margin-top: 24px;}
+        .text-sm { font-size: 12px; color: var(--text-gray); line-height: 1.4; }
         .text-md { font-size: 13px; font-weight: 500; }
         .text-lg { font-size: 15px; font-weight: 600; }
         .text-xl { font-size: 42px; font-weight: 700; letter-spacing: -0.5px; }
 
-        /* --- Общие элементы UI --- */
+        /* --- Элементы UI --- */
         .header {
             display: flex;
             justify-content: space-between;
@@ -85,14 +86,14 @@
             border: none;
             color: white;
             cursor: pointer;
+            font-size: 14px;
         }
 
-        .card {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 20px;
-            margin-bottom: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        /* Общий класс для карточек с рамкой */
+        .card-border {
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 16px; /* Скругление как на макете */
+            border: 1px solid var(--border-color); /* ВОТ ОНА, РАМКА */
         }
 
         .btn-primary {
@@ -118,6 +119,7 @@
             font-size: 13px;
             font-weight: 600;
             cursor: pointer;
+            min-width: 70px;
         }
 
         /* --- Screen 1: MINE --- */
@@ -126,11 +128,10 @@
             border-radius: 20px;
             padding: 20px;
             margin-bottom: 12px;
+            border: 1px solid var(--border-color);
         }
         
-        .progress-container {
-            margin-top: 15px;
-        }
+        .progress-container { margin-top: 15px; }
         .progress-bar {
             height: 8px;
             background: #333;
@@ -141,14 +142,13 @@
         .progress-fill {
             height: 100%;
             background: var(--primary-orange);
-            width: 65%; /* Пример заполнения */
+            width: 65%;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-bottom: 20px;
             font-size: 12px;
             color: var(--text-gray-light);
         }
@@ -169,6 +169,8 @@
             display: flex;
             flex-direction: column;
             gap: 4px;
+            /* Добавил тонкую рамку и сюда для аккуратности */
+            border: 1px solid rgba(255,255,255,0.05); 
         }
         .badge-gray {
             background: var(--card-gray);
@@ -206,9 +208,6 @@
             display: flex;
             align-items: center;
             justify-content: space-between;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.05);
-            border-radius: 16px;
             padding: 12px;
             margin-bottom: 12px;
         }
@@ -239,7 +238,7 @@
             border-radius: 16px;
             padding: 16px;
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color); /* Вернули рамку */
         }
         .btn-small-orange {
             background: var(--primary-orange);
@@ -250,6 +249,7 @@
             width: 100%;
             margin-top: 8px;
             border: none;
+            font-weight: 600;
         }
 
         .mode-tabs {
@@ -257,13 +257,14 @@
             gap: 8px;
             margin-bottom: 24px;
             overflow-x: auto;
+            padding-bottom: 4px; /* Чтобы скроллбар не налипал если появится */
         }
         .mode-tab {
             padding: 8px 16px;
             border-radius: 20px;
             font-size: 13px;
             background: rgba(34, 34, 34, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.1); /* stroke 1pt white gradient imitation */
+            border: 1px solid rgba(255, 255, 255, 0.1);
             color: var(--text-gray);
             white-space: nowrap;
         }
@@ -281,7 +282,7 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 20px;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color); /* Вернули рамку */
         }
         .banner img { width: 80px; height: auto; object-fit: contain; }
 
@@ -295,7 +296,7 @@
             border-radius: 16px;
             padding: 12px 8px;
             text-align: center;
-            border: 1px solid rgba(255,255,255,0.08);
+            border: 1px solid var(--border-color); /* Вернули рамку */
         }
         .server-card img {
             width: 100%;
@@ -321,6 +322,7 @@
             gap: 10px;
             margin-bottom: 20px;
             font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.05);
         }
         .wallet-circle {
             width: 12px; height: 12px; background: #fff; border-radius: 50%;
@@ -330,11 +332,11 @@
             background: #151515;
             border-radius: 16px;
             padding: 20px;
-            border: 1px solid rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color); /* Вернули рамку */
             margin-bottom: 12px;
         }
         .progress-track-dark {
-            background: #282828; /* Точный цвет из ТЗ */
+            background: #282828;
             height: 8px;
             border-radius: 4px;
             width: 100%;
@@ -361,7 +363,7 @@
             display: flex;
             justify-content: space-around;
             padding: 12px 0 24px 0;
-            border-top: 1px solid rgba(255,255,255,0.05);
+            border-top: 1px solid rgba(255,255,255,0.1);
             z-index: 100;
         }
 
@@ -370,28 +372,20 @@
             flex-direction: column;
             align-items: center;
             gap: 4px;
-            color: #555; /* Неактивный цвет */
+            color: #555;
             font-size: 10px;
             cursor: pointer;
             transition: color 0.2s;
         }
 
         .nav-item svg path {
-            fill: #555; /* Неактивный цвет иконок */
+            fill: #555;
             transition: fill 0.2s;
         }
 
-        .nav-item.active {
-            color: #fff;
-        }
-        .nav-item.active svg path {
-            fill: #fff;
-        }
-        
-        /* Исключение для иконки Wallet, у нее stroke может быть */
-        .nav-item.active svg path[stroke] {
-            stroke: #fff;
-        }
+        .nav-item.active { color: #fff; }
+        .nav-item.active svg path { fill: #fff; }
+        .nav-item.active svg path[stroke] { stroke: #fff; }
         
     </style>
 </head>
@@ -399,7 +393,7 @@
 
     <div id="mine" class="screen active">
         <div class="header">
-            <button class="btn-icon">✕</button>
+            <button class="btn-icon" onclick="Telegram.WebApp.close()">✕</button>
             <button class="btn-icon">:</button>
         </div>
 
@@ -419,7 +413,7 @@
             </div>
         </div>
 
-        <div class="card" style="padding: 12px 16px;">
+        <div class="card-border" style="padding: 12px 16px; margin-bottom: 12px;">
             <div class="stats-grid" style="margin-bottom:0;">
                 <div class="stats-row">
                     <span>Block</span>
@@ -458,17 +452,10 @@
             </div>
             <div class="text-sm" style="color:#555">Created By: @Username</div>
         </div>
-        <div class="list-item">
+         <div class="list-item">
             <div style="display:flex; justify-content:space-between;">
                 <span class="text-md">Block #1831237 <span class="badge-gray">My reward: 0.662</span></span>
                 <span class="text-sm">03:13</span>
-            </div>
-            <div class="text-sm" style="color:#555">Created By: @Username</div>
-        </div>
-        <div class="list-item">
-            <div style="display:flex; justify-content:space-between;">
-                <span class="text-md">Block #1831236 <span class="badge-gray">My reward: 0.652</span></span>
-                <span class="text-sm">03:12</span>
             </div>
             <div class="text-sm" style="color:#555">Created By: @Username</div>
         </div>
@@ -477,7 +464,7 @@
 
     <div id="tasks" class="screen">
         <div class="header">
-            <button class="btn-icon">✕</button>
+            <button class="btn-icon" onclick="Telegram.WebApp.close()">✕</button>
             <div style="flex:1"></div>
             <button class="btn-icon">:</button>
         </div>
@@ -492,7 +479,7 @@
             <div class="tab">Friends</div>
         </div>
 
-        <div class="task-item">
+        <div class="task-item card-border">
             <div style="display:flex; align-items:center;">
                 <div class="task-icon">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
@@ -505,219 +492,7 @@
             <button class="btn-white">Start</button>
         </div>
 
-        <div class="task-item">
+        <div class="task-item card-border">
             <div style="display:flex; align-items:center;">
                 <div class="task-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm5.86 8.05l-2.12 10.13c-.15.68-.56.85-1.13.53l-3.13-2.31-1.51 1.45c-.17.17-.32.31-.65.31l.22-3.18 5.79-5.24c.25-.23-.06-.36-.39-.13l-7.15 4.51-3.08-.96c-.67-.21-.68-.67.14-.99l12.04-4.64c.56-.21 1.04.13.97.52z"/></svg>
-                </div>
-                <div>
-                    <div class="text-md">Join Telegram Channel</div>
-                    <div class="text-sm">+1000 Energy</div>
-                </div>
-            </div>
-            <button class="btn-white">Start</button>
-        </div>
-
-        <div class="task-item">
-            <div style="display:flex; align-items:center;">
-                <div class="task-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M19.615 3.184c-3.604-.246-11.631-.245-15.23 0-3.897.266-4.356 2.62-4.385 8.816.029 6.185.484 8.549 4.385 8.816 3.6.245 11.626.246 15.23 0 3.897-.266 4.356-2.62 4.385-8.816-.029-6.185-.484-8.549-4.385-8.816zm-10.615 12.816v-8l8 3.993-8 4.007z"/></svg>
-                </div>
-                <div>
-                    <div class="text-md">Subscribe to Youtube</div>
-                    <div class="text-sm">+1000 Energy</div>
-                </div>
-            </div>
-            <button class="btn-white">Start</button>
-        </div>
-
-        <div class="task-item">
-            <div style="display:flex; align-items:center;">
-                <div class="task-icon">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93v6.16c0 2.52-1.12 4.84-2.9 6.24-2.22 1.71-5.35 1.76-7.59.07-2.32-1.74-3.08-5.01-1.71-7.64 1.14-2.2 3.64-3.48 6.09-3.23V13.8c-2.31-.56-4.66 1.84-3.9 4.38.64 2.14 3.73 2.98 5.37 1.46 1.14-1.05 1.46-2.69 1.46-4.17v-15.4h-0.9z"/></svg>
-                </div>
-                <div>
-                    <div class="text-md">Follow us on Tiktok</div>
-                    <div class="text-sm">+1000 Energy</div>
-                </div>
-            </div>
-            <button class="btn-white task-btn-claim">Claim</button>
-        </div>
-    </div>
-
-    <div id="upgrade" class="screen">
-        <div class="header">
-            <button class="btn-icon">✕</button>
-            <div style="flex:1"></div>
-            <button class="btn-icon">:</button>
-        </div>
-
-        <h1>Upgrade</h1>
-        <p class="text-sm" style="text-align:center; margin-bottom:20px; padding:0 20px;">
-            Complete Tasks and earn rewards, invite friends for each active friend you will earn a bonus
-        </p>
-
-        <div class="upgrade-grid">
-            <div class="upgrade-card-small">
-                <div class="text-md" style="margin-bottom:4px;">Max Energy</div>
-                <div class="text-sm" style="margin-bottom:12px;">Lvl 5 : Max Energy 8500</div>
-                <button class="btn-small-orange">Upgrade +1000</button>
-            </div>
-            <div class="upgrade-card-small">
-                <div class="text-md" style="margin-bottom:4px;">Restore Energy</div>
-                <div class="text-sm" style="margin-bottom:12px;">4000/8500</div>
-                <button class="btn-small-orange">Restore 100%</button>
-            </div>
-        </div>
-
-        <h2>Mining Mode</h2>
-        <div class="text-sm" style="margin-bottom:12px;">Upgrade your mining method to farm more tokens</div>
-        
-        <div class="mode-tabs">
-            <div class="mode-tab">Basic</div>
-            <div class="mode-tab active">Turbo</div>
-            <div class="mode-tab">Super</div>
-            <div class="mode-tab">Ultimate</div>
-        </div>
-
-        <h2>Background Mining</h2>
-        <div class="text-sm" style="margin-bottom:12px;">Buy and Rent background mining servers</div>
-
-        <div class="banner">
-            <div>
-                <div class="text-md" style="font-weight:700; margin-bottom:4px;">Ultimate Server 40% Discount</div>
-                <div class="text-md" style="font-weight:700; margin-bottom:8px;">with 100,000 H/S</div>
-                <button class="btn-small-orange" style="width:auto; padding:8px 16px;">Rent Now</button>
-            </div>
-            <img src="img/discount.png" alt="Server">
-        </div>
-
-        <div class="server-grid">
-            <div class="server-card">
-                <img src="img/basic.png" alt="Basic">
-                <div class="text-md">Basic</div>
-                <div class="text-sm">12,000 H/S</div>
-                <button class="btn-small-orange">Rent Now</button>
-            </div>
-            <div class="server-card">
-                <img src="img/turbo.png" alt="Turbo">
-                <div class="text-md">Turbo</div>
-                <div class="text-sm">32,000 H/S</div>
-                <button class="btn-small-orange">Rent Now</button>
-            </div>
-            <div class="server-card">
-                <img src="img/super.png" alt="Super">
-                <div class="text-md">Super</div>
-                <div class="text-sm">58,000 H/S</div>
-                <button class="btn-small-orange">Rent Now</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="wallet" class="screen">
-        <div class="header">
-            <button class="btn-icon">✕</button>
-            <div style="flex:1"></div>
-            <button class="btn-icon">:</button>
-        </div>
-
-        <div class="wallet-center">
-            <div class="text-gray" style="margin-bottom:8px;">Key Balance</div>
-            <div class="text-xl">12,931.523</div>
-            <div style="background:#222; border-radius:8px; padding:6px 12px; margin-top:12px; font-size:12px; color:#555;">Claim Tokens</div>
-        </div>
-
-        <div class="text-md" style="margin-bottom:8px; margin-left:4px;">Connected Wallet</div>
-        <div class="wallet-address">
-            <div class="wallet-circle"></div>
-            <span style="flex:1; font-family:monospace;">0:61jSD...iS2F8</span>
-            <span style="color:#555">✕</span>
-        </div>
-
-        <div class="text-md" style="margin-bottom:8px; margin-left:4px;">Blockchain Explorer</div>
-        <div class="explorer-card">
-            <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                <span class="text-sm">Current Stage: Mining</span>
-                <span class="text-sm">65.21%</span>
-            </div>
-            <div class="progress-track-dark">
-                <div style="height:100%; width:65%; background:var(--primary-orange); border-radius:4px;"></div>
-            </div>
-            <div class="stats-row text-sm" style="color:#797979">
-                <span>Total Supply</span>
-                <span style="color:#fff">10,000,000,000</span>
-            </div>
-            <div class="stats-row text-sm" style="color:#797979">
-                <span>Total Holders</span>
-                <span style="color:#fff">55,231</span>
-            </div>
-            <div class="stats-row text-sm" style="color:#797979">
-                <span>Mining Started on:</span>
-                <span style="color:#fff">Feb 16, 2025</span>
-            </div>
-        </div>
-
-        <div class="menu-row">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div style="background:#fff; width:20px; height:20px; border-radius:50%; color:#000; text-align:center; line-height:20px; font-weight:bold;">?</div>
-                <span>Support</span>
-            </div>
-        </div>
-        <div class="menu-row">
-            <div style="display:flex; align-items:center; gap:12px;">
-                <div style="width:20px; height:20px; border-radius:50%; border:1px solid #fff; display:flex; align-items:center; justify-content:center;">🌐</div>
-                <span>Language</span>
-            </div>
-            <span class="text-gray">English ></span>
-        </div>
-    </div>
-
-    <div class="bottom-nav">
-        <div class="nav-item active" onclick="switchScreen('mine', this)">
-            <svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M22.5 7.08012C22.5 10.9903 19.3171 14.1603 15.3908 14.1603C14.6744 14.1603 13.0431 13.9956 12.2496 13.337L11.2575 14.325C10.6743 14.9058 10.8318 15.0768 11.0913 15.3585C11.1995 15.4761 11.3256 15.6129 11.4229 15.8068C11.4229 15.8068 12.2496 16.9594 11.4229 18.1119C10.9269 18.7705 9.53809 19.6926 7.95098 18.1119L7.62032 18.4412C7.62032 18.4412 8.6123 19.5938 7.78565 20.7464C7.28966 21.405 5.96703 22.0636 4.80972 20.9111L3.65243 22.0636C2.85884 22.8539 1.88893 22.3929 1.50318 22.0636L0.511212 21.0756C-0.414641 20.1536 0.125438 19.1547 0.511212 18.7705L9.10834 10.2086C9.10834 10.2086 8.28169 8.8913 8.28169 7.08012C8.28169 3.16988 11.4645 0 15.3908 0C19.3171 0 22.5 3.16988 22.5 7.08012ZM15.3911 9.55001C16.7607 9.55001 17.871 8.44426 17.871 7.08022C17.871 5.71618 16.7607 4.61041 15.3911 4.61041C14.0214 4.61041 12.9112 5.71618 12.9112 7.08022C12.9112 8.44426 14.0214 9.55001 15.3911 9.55001Z" fill="#797979"/>
-            </svg>
-            <span>Mine</span>
-        </div>
-
-        <div class="nav-item" onclick="switchScreen('tasks', this)">
-            <svg width="21" height="23" viewBox="0 0 21 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M7.3125 0C6.38052 0 5.625 0.755516 5.625 1.6875V2.8125C5.625 3.74448 6.38052 4.5 7.3125 4.5H12.9375C13.8695 4.5 14.625 3.74448 14.625 2.8125V1.6875C14.625 0.755516 13.8695 0 12.9375 0H7.3125Z" fill="#797979"/>
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M3.9375 2.2912C2.52235 2.37059 1.62898 2.5961 0.988515 3.23656C0 4.22507 0 5.81606 0 8.99804V15.7481C0 18.93 0 20.521 0.988515 21.5096C1.97703 22.4981 3.56802 22.4981 6.75 22.4981H13.5C16.6819 22.4981 18.2729 22.4981 19.2615 21.5096C20.25 20.521 20.25 18.93 20.25 15.7481V8.99804C20.25 5.81606 20.25 4.22507 19.2615 3.23656C18.621 2.5961 17.7276 2.37059 16.3125 2.2912V2.8125C16.3125 4.67646 14.8015 6.1875 12.9375 6.1875H7.3125C5.44854 6.1875 3.9375 4.67646 3.9375 2.8125V2.2912ZM4.5 8.71875C4.03401 8.71875 3.65625 9.09653 3.65625 9.5625C3.65625 10.0285 4.03401 10.4063 4.5 10.4063H5.0625C5.52849 10.4063 5.90625 10.0285 5.90625 9.5625C5.90625 9.09653 5.52849 8.71875 5.0625 8.71875H4.5ZM8.4375 8.71875C7.97152 8.71875 7.59375 9.09653 7.59375 9.5625C7.59375 10.0285 7.97152 10.4063 8.4375 10.4063H15.75C16.216 10.4063 16.5938 10.0285 16.5938 9.5625C16.5938 9.09653 16.216 8.71875 15.75 8.71875H8.4375ZM4.5 12.6563C4.03401 12.6563 3.65625 13.034 3.65625 13.5C3.65625 13.966 4.03401 14.3438 4.5 14.3438H5.0625C5.52849 14.3438 5.90625 13.966 5.90625 13.5C5.90625 13.034 5.52849 12.6563 5.0625 12.6563H4.5ZM8.4375 12.6563C7.97152 12.6563 7.59375 13.034 7.59375 13.5C7.59375 13.966 7.97152 14.3438 8.4375 14.3438H15.75C16.216 14.3438 16.5938 13.966 16.5938 13.5C16.5938 13.034 16.216 12.6563 15.75 12.6563H8.4375ZM4.5 16.5938C4.03401 16.5938 3.65625 16.9715 3.65625 17.4375C3.65625 17.9035 4.03401 18.2813 4.5 18.2813H5.0625C5.52849 18.2813 5.90625 17.9035 5.90625 17.4375C5.90625 16.9715 5.52849 16.5938 5.0625 16.5938H4.5ZM8.4375 16.5938C7.97152 16.5938 7.59375 16.9715 7.59375 17.4375C7.59375 17.9035 7.97152 18.2813 8.4375 18.2813H15.75C16.216 18.2813 16.5938 17.9035 16.5938 17.4375C16.5938 16.9715 16.216 16.5938 15.75 16.5938H8.4375Z" fill="#797979"/>
-            </svg>
-            <span>Tasks</span>
-        </div>
-
-        <div class="nav-item" onclick="switchScreen('upgrade', this)">
-            <svg width="23" height="23" viewBox="0 0 23 23" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M7.91358 4.45847L5.05254 7.31092C4.52665 7.83521 4.04424 8.31615 3.66327 8.75092C3.41862 9.03008 3.17413 9.33574 2.96704 9.67335L2.93917 9.64556C2.88625 9.5928 2.85976 9.56636 2.83319 9.5406C2.33591 9.05809 1.75096 8.67449 1.10966 8.41026C1.07539 8.39614 1.04061 8.38236 0.971035 8.3548L0.545054 8.186C-0.0320264 7.95733 -0.185825 7.21443 0.253285 6.77665C1.51352 5.52023 3.02661 4.01172 3.75684 3.70874C4.40083 3.44154 5.09651 3.35263 5.76747 3.45179C6.38225 3.54264 6.96382 3.85843 7.91358 4.45847Z" fill="#797979"/>
-            <path d="M12.7988 19.4774C13.0293 19.7114 13.1824 19.8767 13.3209 20.0533C13.5035 20.2863 13.6668 20.5339 13.8092 20.7933C13.9694 21.0855 14.0938 21.3976 14.3426 22.0217C14.5451 22.5299 15.2181 22.6642 15.6089 22.2745L15.7034 22.1802C16.9637 20.9237 18.4767 19.4152 18.7805 18.6872C19.0486 18.0451 19.1377 17.3515 19.0383 16.6826C18.9471 16.0697 18.6306 15.49 18.0288 14.5433L15.1583 17.4053C14.6204 17.9415 14.1273 18.4332 13.6814 18.8183C13.4141 19.0491 13.1217 19.2799 12.7988 19.4774Z" fill="#797979"/>
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M14.0026 16.174L20.5802 9.61605C21.5276 8.67162 22.0012 8.1994 22.2506 7.5989C22.5001 6.99841 22.5001 6.33059 22.5001 4.99495V4.35687C22.5001 2.30302 22.5001 1.2761 21.8601 0.638044C21.2202 1.19209e-07 20.1902 0 18.1302 0H17.4902C16.1505 0 15.4807 1.04308e-07 14.8784 0.248738C14.276 0.497475 13.8024 0.969693 12.8552 1.91414L6.27741 8.47213C5.1705 9.57566 4.48416 10.26 4.21838 10.9209C4.13441 11.1297 4.09243 11.3363 4.09243 11.5528C4.09243 12.4552 4.82075 13.1814 6.27741 14.6337L6.47319 14.8288L8.76652 12.5013C9.09362 12.1693 9.62777 12.1654 9.95975 12.4924C10.2916 12.8195 10.2956 13.3537 9.96853 13.6857L7.66824 16.0203L7.82243 16.174C9.27913 17.6264 10.0075 18.3525 10.9125 18.3525C11.1124 18.3525 11.3038 18.317 11.4963 18.2461C12.175 17.9962 12.8678 17.3054 14.0026 16.174ZM17.0927 8.4726C16.2394 9.32332 14.856 9.32332 14.0027 8.4726C13.1494 7.62188 13.1494 6.24257 14.0027 5.39183C14.856 4.5411 16.2394 4.5411 17.0927 5.39183C17.946 6.24257 17.946 7.62188 17.0927 8.4726Z" fill="#797979"/>
-            </svg>
-            <span>Upgrade</span>
-        </div>
-
-        <div class="nav-item" onclick="switchScreen('wallet', this)">
-            <svg width="24" height="20" viewBox="0 0 24 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M21.4885 5.62899C21.4247 5.62498 21.3553 5.625 21.2834 5.62502L18.4434 5.62504C16.1172 5.62504 14.1269 7.45604 14.1269 9.84377C14.1269 12.2315 16.1172 14.0625 18.4434 14.0625H21.2834C21.3553 14.0625 21.4247 14.0626 21.4885 14.0586C22.4334 13.9988 23.2689 13.2595 23.3393 12.2267C23.3439 12.159 23.3438 12.086 23.3438 12.0184V7.66917C23.3438 7.60151 23.3439 7.52851 23.3393 7.4608C23.2689 6.42806 22.4334 5.68866 21.4885 5.62899ZM18.1932 10.9688C18.792 10.9688 19.2774 10.4651 19.2774 9.84377C19.2774 9.22244 18.792 8.71877 18.1932 8.71877C17.5943 8.71877 17.1088 9.22244 17.1088 9.84377C17.1088 10.4651 17.5943 10.9688 18.1932 10.9688Z" fill="#797979"/>
-            <path fill-rule="evenodd" clip-rule="evenodd" d="M21.2826 15.75C21.4504 15.7456 21.5774 15.901 21.5318 16.0625C21.306 16.864 20.9475 17.5472 20.3724 18.1224C19.5304 18.9642 18.4628 19.3378 17.1439 19.5153C15.8623 19.6875 14.2247 19.6875 12.1572 19.6875H9.7803C7.71281 19.6875 6.07521 19.6875 4.7936 19.5153C3.47463 19.3378 2.40706 18.9642 1.56515 18.1224C0.72324 17.2804 0.349606 16.2128 0.172283 14.8939C-3.317e-05 13.6123 -2.19902e-05 11.9747 5.09803e-07 9.9072V9.7803C-2.19902e-05 7.71281 -3.317e-05 6.07521 0.172283 4.7936C0.349606 3.47463 0.72324 2.40706 1.56515 1.56515C2.40706 0.723241 3.47463 0.349606 4.7936 0.172283C6.07521 -3.317e-05 7.7128 -2.19902e-05 9.7803 5.09804e-07H12.1572C14.2247 -2.19902e-05 15.8623 -3.317e-05 17.1439 0.172283C18.4628 0.349606 19.5304 0.723241 20.3724 1.56515C20.9475 2.14034 21.3059 2.82346 21.5318 3.62495C21.5774 3.78647 21.4504 3.94185 21.2826 3.9375L18.4432 3.93751C15.2521 3.93751 12.4392 6.45852 12.4392 9.84375C12.4392 13.229 15.2521 15.75 18.4432 15.75H21.2826ZM5.625 14.0625C5.15901 14.0625 4.78125 13.6847 4.78125 13.2187V6.46875C4.78125 6.00276 5.15901 5.625 5.625 5.625C6.09099 5.625 6.46875 6.00276 6.46875 6.46875V13.2187C6.46875 13.6847 6.09099 14.0625 5.625 14.0625Z" fill="#797979"/>
-            </svg>
-            <span>Wallet</span>
-        </div>
-    </div>
-
-    <script>
-        function switchScreen(screenId, navElement) {
-            // Скрыть все экраны
-            document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
-            
-            // Показать нужный
-            document.getElementById(screenId).classList.add('active');
-            
-            // Обновить навигацию
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            navElement.classList.add('active');
-        }
-    </script>
-</body>
-</html>
+                     <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0
